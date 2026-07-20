@@ -3,1030 +3,422 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exchange Visitor Map & Analytics Dashboard</title>
-    
-    <!-- Leaflet CSS with Security Integrity Verification -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-          crossorigin=""/>
-
+    <title>Department of State AI Tools Overview</title>
     <style>
-        /* Design Tokens & Theme Variables */
         :root {
-            --primary-navy: #0f2942;
-            --primary-blue: #005ea2;
-            --primary-blue-hover: #1a4480;
-            --accent-teal: #00a3a6;
-            --danger-red: #d9381e;
-            --neutral-dark: #1b1b1b;
-            --neutral-mid: #565c65;
-            --neutral-light: #f0f4f8;
-            --white: #ffffff;
+            --primary-blue: #002868; /* Official US Flag Blue */
+            --gold-accent: #C5A059;   /* Elegant Gold Accent */
+            --bg-light: #F1F5F9;
+            --border-color: #E2E8F0;
+            --text-dark: #0F172A;
+            --text-muted: #475569;
             
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-            
-            --radius-sm: 6px;
-            --radius-md: 10px;
-            --radius-lg: 16px;
-            --transition-all: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            /* Status Colors */
+            --sbu-green: #059669;
+            --sbu-bg: #ECFDF5;
+            --external-red: #DC2626;
+            --external-bg: #FEF2F2;
+            --fan-orange: #D97706;
+            --fan-bg: #FFFBEB;
         }
 
-        /* Core Layout Reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            width: 100vw;
-            background-color: var(--neutral-light);
-            color: var(--neutral-dark);
-            overflow: hidden;
+            color: var(--text-dark);
+            background-color: #E2E8F0;
+            line-height: 1.4;
+            padding: 20px;
         }
 
-        /* Skip Navigation Link for Screen Readers & Keyboard Users */
-        .skip-link {
-            position: absolute;
-            top: -100px;
-            left: 0;
-            background: var(--primary-blue);
-            color: white;
-            padding: 1rem;
-            z-index: 9999;
-            transition: top 0.2s;
-        }
-        .skip-link:focus {
-            top: 0;
-        }
-
-        /* Header System */
-        header {
-            background: linear-gradient(135deg, var(--primary-navy) 0%, #071624 100%);
-            color: var(--white);
-            padding: 1rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: var(--shadow-sm);
-            z-index: 1000;
-            border-bottom: 3px solid var(--accent-teal);
-        }
-        .header-brand-container {
-            display: flex;
-            flex-direction: column;
-        }
-        .header-dept {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #adcded;
-            font-weight: 600;
-        }
-        .header-title {
-            font-size: 1.35rem;
-            font-weight: 700;
-            margin: 0;
-            letter-spacing: -0.01em;
-        }
-        .header-actions {
-            display: flex;
-            gap: 0.75rem;
-        }
-        .btn-header {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 0.5rem 0.85rem;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-size: 0.8rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            transition: var(--transition-all);
-        }
-        .btn-header:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Dashboard Container */
-        .dashboard-container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-            position: relative;
-        }
-
-        /* Left Sidebar: Controls & List */
-        aside.sidebar-left {
-            width: 320px;
-            background: var(--white);
-            border-right: 1px solid #dfe1e2;
-            display: flex;
-            flex-direction: column;
-            box-shadow: var(--shadow-md);
-            z-index: 10;
-        }
-        .sidebar-section-pad {
-            padding: 1.25rem;
-        }
-        .sidebar-header {
-            border-bottom: 1px solid #dfe1e2;
-        }
-        .search-container {
-            position: relative;
-            margin-bottom: 1rem;
-        }
-        .search-container input {
-            width: 100%;
-            padding: 0.8rem 1rem 0.8rem 2.5rem;
-            border: 1.5px solid #71767a;
-            border-radius: var(--radius-md);
-            font-size: 0.9rem;
-            transition: var(--transition-all);
-            box-sizing: border-box;
-        }
-        .search-container input:focus {
-            border-color: var(--primary-blue);
-            box-shadow: 0 0 0 3px rgba(0, 94, 162, 0.2);
-            outline: none;
-        }
-        .search-icon {
-            position: absolute;
-            left: 0.9rem;
-            top: 50%;
-            transform: translateY(-50%);
-            pointer-events: none;
-            opacity: 0.6;
-        }
-        .search-spinner {
-            position: absolute;
-            right: 0.9rem;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 16px;
-            height: 16px;
-            border: 2px solid #ccc;
-            border-top-color: var(--primary-blue);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            display: none;
-        }
-
-        /* Interactive Counter Widgets */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
-        }
-        .stat-card {
-            background-color: var(--neutral-light);
-            padding: 0.85rem;
-            border-radius: var(--radius-md);
-            border: 1px solid #dfe1e2;
-            transition: var(--transition-all);
-        }
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-sm);
-        }
-        .stat-val {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: var(--primary-blue);
-            line-height: 1.1;
-        }
-        .stat-label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            color: var(--neutral-mid);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-top: 0.25rem;
-        }
-
-        /* Custom Scrollable Filter List */
-        .filter-list-container {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 1rem 1.25rem;
-        }
-        .filter-group-title {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            color: var(--neutral-mid);
-            margin-bottom: 0.75rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .btn-link-action {
-            background: none;
-            border: none;
-            color: var(--primary-blue);
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            padding: 0;
-        }
-        .btn-link-action:hover {
-            text-decoration: underline;
-        }
-        .filter-items {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 0.35rem;
-        }
-        .filter-card {
-            display: flex;
-            align-items: center;
-            padding: 0.6rem 0.8rem;
-            background: var(--white);
-            border: 1px solid #dfe1e2;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            transition: var(--transition-all);
-        }
-        .filter-card:hover {
-            border-color: var(--primary-blue);
-            background-color: var(--neutral-light);
-        }
-        .filter-card.selected {
-            background-color: rgba(0, 94, 162, 0.06);
-            border-color: var(--primary-blue);
-        }
-        .filter-card input[type="checkbox"] {
-            margin-right: 0.75rem;
-            width: 1.1rem;
-            height: 1.1rem;
-            accent-color: var(--primary-blue);
-            cursor: pointer;
-        }
-        .filter-card label {
-            flex-grow: 1;
-            font-size: 0.85rem;
-            font-weight: 500;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-        }
-        .badge-count {
-            background: #e1e7ec;
-            color: var(--neutral-dark);
-            font-size: 0.7rem;
-            padding: 0.1rem 0.4rem;
-            border-radius: 10px;
-            font-weight: 600;
-        }
-
-        /* Center Section: Map Space */
-        main.map-workspace {
-            flex: 1;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-        }
-        #map {
-            width: 100%;
-            height: 100%;
-            background-color: #cadcfc;
-        }
-
-        /* ArcGIS-Inspired CSS DivIcon Markers */
-        .map-marker-bubble {
-            background: var(--white);
+        /* 8.5x11 Page Setup */
+        .infographic-container {
+            max-width: 816px; /* 8.5 inches at 96 DPI */
+            min-height: 1056px; /* 11 inches at 96 DPI */
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
             border: 2px solid var(--primary-blue);
-            border-radius: 50%;
-            color: var(--neutral-dark);
-            font-weight: 700;
-            font-size: 0.75rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: var(--shadow-md);
-            transition: var(--transition-all);
-        }
-        .map-marker-bubble:hover {
-            transform: scale(1.15);
-            box-shadow: var(--shadow-lg);
-            z-index: 1000 !important;
-        }
-        .bubble-high {
-            border-color: var(--danger-red);
-            background: #fdf3f2;
-        }
-        .bubble-mid {
-            border-color: var(--primary-blue);
-            background: #f1f7fc;
-        }
-        .bubble-low {
-            border-color: var(--accent-teal);
-            background: #f0fafb;
-        }
-
-        /* Floating Controls & Legend */
-        .map-floating-panel {
-            position: absolute;
-            background: var(--white);
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-lg);
-            border: 1px solid #dfe1e2;
-            z-index: 1000;
-            pointer-events: auto;
-        }
-        .map-legend {
-            bottom: 1.5rem;
-            left: 1.5rem;
-            padding: 1rem;
-            max-width: 200px;
-        }
-        .legend-title {
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--neutral-mid);
-            margin-bottom: 0.6rem;
-        }
-        .legend-row {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.75rem;
-            margin-bottom: 0.4rem;
-            font-weight: 500;
-        }
-        .legend-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            border: 2px solid transparent;
-        }
-
-        /* Right Sidebar: Rich Details Panel */
-        aside.sidebar-right {
-            width: 400px;
-            background: var(--white);
-            border-left: 1px solid #dfe1e2;
+            padding: 30px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
             display: flex;
             flex-direction: column;
-            box-shadow: var(--shadow-lg);
-            z-index: 10;
-            transition: var(--transition-all);
-        }
-        .detail-hero {
+            justify-content: space-between;
             position: relative;
-            height: 140px;
-            background: linear-gradient(135deg, #071624 0%, var(--primary-navy) 100%);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 1.25rem;
-            box-sizing: border-box;
             overflow: hidden;
         }
-        .detail-hero::before {
+
+        /* Gold top accent bar */
+        .infographic-container::before {
             content: "";
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-image: radial-gradient(circle at 80% 20%, rgba(0, 163, 166, 0.25) 0%, transparent 60%);
-            pointer-events: none;
-        }
-        .detail-hero-city {
-            font-size: 1.4rem;
-            font-weight: 800;
-            margin: 0;
-            letter-spacing: -0.02em;
-            z-index: 2;
-        }
-        .detail-hero-state {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #adcded;
-            font-weight: 600;
-            margin-top: 0.2rem;
-            z-index: 2;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary-blue) 0%, var(--gold-accent) 50%, var(--primary-blue) 100%);
         }
 
-        /* Tabs Panel styling */
-        .tab-nav {
+        /* Header Layout */
+        header {
             display: flex;
-            background: var(--neutral-light);
-            border-bottom: 1px solid #dfe1e2;
-            padding: 0 0.5rem;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 4px double var(--gold-accent);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
         }
-        .tab-trigger {
-            flex: 1;
-            background: none;
-            border: none;
-            padding: 0.9rem 0.25rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--neutral-mid);
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            transition: var(--transition-all);
+
+        .seal-img {
+            width: 85px;
+            height: 85px;
+            flex-shrink: 0;
         }
-        .tab-trigger:hover {
-            color: var(--primary-blue);
-        }
-        .tab-trigger.active {
-            color: var(--primary-blue);
-            border-bottom-color: var(--primary-blue);
-        }
-        .tab-pane {
-            display: none;
-            padding: 1.25rem;
+
+        .header-text {
             flex-grow: 1;
-            overflow-y: auto;
         }
-        .tab-pane.active {
+
+        h1 {
+            color: var(--primary-blue);
+            font-size: 28px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1.1;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Grid Layout */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            align-items: stretch;
+            flex-grow: 1;
+        }
+
+        .column {
+            border-radius: 10px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 1.25rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
         }
 
-        /* Accessible Tabular Layout styling within the side bar */
-        .sidebar-table-container {
-            width: 100%;
-            overflow-x: auto;
-            border-radius: var(--radius-md);
-            border: 1px solid #dfe1e2;
+        /* Color-Coded Column Themes */
+        .column-internal { 
+            background: linear-gradient(180deg, #FFFFFF 0%, #FAFCFB 100%);
+            border-top: 5px solid var(--sbu-green);
         }
-        .sidebar-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.8rem;
-            text-align: left;
-            background: white;
+        .column-external { 
+            background: linear-gradient(180deg, #FFFFFF 0%, #FFFAFA 100%);
+            border-top: 5px solid var(--external-red);
         }
-        .sidebar-table th {
-            background-color: var(--neutral-light);
-            color: var(--neutral-mid);
-            font-weight: 700;
-            padding: 0.6rem 0.8rem;
-            border-bottom: 1px solid #dfe1e2;
-            text-transform: uppercase;
-            font-size: 0.7rem;
-            letter-spacing: 0.03em;
-        }
-        .sidebar-table td {
-            padding: 0.6rem 0.8rem;
-            border-bottom: 1px solid var(--neutral-light);
-            color: var(--neutral-dark);
-        }
-        .sidebar-table tbody tr:hover {
-            background-color: rgba(0, 94, 162, 0.04);
+        .column-fan { 
+            background: linear-gradient(180deg, #FFFFFF 0%, #FFFDF9 100%);
+            border-top: 5px solid var(--fan-orange);
         }
 
-        /* Detail Cards & Stats UI */
-        .detail-card {
-            background: var(--neutral-light);
-            border: 1px solid #dfe1e2;
-            border-radius: var(--radius-md);
-            padding: 1rem;
-        }
-        .detail-card-title {
-            font-size: 0.75rem;
+        .column-header {
+            text-align: center;
+            font-weight: 800;
+            font-size: 15px;
+            margin-bottom: 12px;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .internal-header { color: var(--sbu-green); }
+        .external-header { color: var(--external-red); }
+        .fan-header { color: var(--fan-orange); }
+
+        /* Security Badges */
+        .policy-badge {
+            font-size: 11px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
             font-weight: 700;
-            color: var(--neutral-mid);
-            margin-bottom: 0.5rem;
+            text-align: center;
+            line-height: 1.3;
+            text-transform: uppercase;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .internal-badge { background-color: var(--sbu-bg); color: var(--sbu-green); border: 1px solid rgba(5, 150, 105, 0.2); }
+        .external-badge { background-color: var(--external-bg); color: var(--external-red); border: 1px solid rgba(220, 38, 38, 0.2); }
+        .fan-badge { background-color: var(--fan-bg); color: var(--fan-orange); border: 1px solid rgba(217, 119, 6, 0.2); }
+
+        /* Tool Items styling */
+        .tool-list {
+            list-style: none;
+        }
+
+        .tool-item {
+            margin-bottom: 12px;
+            padding: 10px;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .tool-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+            border-color: #CBD5E1;
+        }
+
+        .tool-name {
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--primary-blue);
             display: flex;
             align-items: center;
-            gap: 0.4rem;
-        }
-        .detail-card-val {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--primary-navy);
+            gap: 5px;
         }
 
-        /* Progress Bar UI */
-        .metric-container {
-            margin-bottom: 0.85rem;
-        }
-        .metric-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-bottom: 0.35rem;
-        }
-        .metric-bar-track {
-            height: 8px;
-            background: #e1e7ec;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .metric-bar-fill {
-            height: 100%;
-            background: var(--primary-blue);
-            border-radius: 4px;
-            width: 0%;
-            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        .tool-link {
+            display: block;
+            font-size: 11px;
+            color: #2563EB;
+            text-decoration: none;
+            word-break: break-all;
+            margin-top: 4px;
+            font-weight: 500;
         }
 
-        /* Modal Panel for Keyboard Shortcuts */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
+        .tool-link:hover {
+            text-decoration: underline;
+            color: #1D4ED8;
         }
-        .modal-overlay.active {
-            display: flex;
+
+        .tool-note {
+            font-size: 11px;
+            color: var(--text-muted);
+            background: #F8FAFC;
+            padding: 6px;
+            border-radius: 4px;
+            margin-top: 6px;
+            border-left: 3px solid var(--fan-orange);
         }
-        .modal-content {
-            background: var(--white);
-            padding: 2rem;
-            border-radius: var(--radius-lg);
-            max-width: 450px;
-            width: 100%;
-            box-shadow: var(--shadow-lg);
+
+        /* Footer Hub Styling */
+        footer {
+            margin-top: 25px;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, #0A1931 100%);
+            border: 2px solid var(--gold-accent);
+            border-radius: 10px;
+            padding: 18px;
+            color: #ffffff;
+            position: relative;
         }
-        .modal-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-top: 0;
-            margin-bottom: 1rem;
+
+        .footer-title {
+            color: var(--gold-accent);
+            font-size: 15px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(197, 160, 89, 0.3);
+            padding-bottom: 6px;
+            text-align: center;
         }
-        .shortcut-grid {
+
+        .footer-grid {
             display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 0.75rem 1.5rem;
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
         }
-        kbd {
-            background: var(--neutral-light);
-            border: 1px solid #71767a;
-            border-radius: 4px;
-            padding: 0.1rem 0.4rem;
-            font-family: monospace;
+
+        .footer-item {
+            font-size: 12px;
+        }
+
+        .footer-item strong {
+            color: #E2E8F0;
+        }
+
+        .footer-link {
+            color: #93C5FD;
+            text-decoration: none;
             font-weight: 600;
-        }
-        .btn-modal-close {
-            background: var(--primary-blue);
-            color: white;
-            border: none;
-            padding: 0.6rem 1.2rem;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
+            display: inline-block;
+            margin-top: 4px;
         }
 
-        /* Native Focus Indicator Accessibility Rule */
-        *:focus-visible {
-            outline: 3px solid var(--primary-blue) !important;
-            outline-offset: 2px !important;
+        .footer-link:hover {
+            color: #ffffff;
+            text-decoration: underline;
         }
 
-        @keyframes spin {
-            to { transform: translateY(-50%) rotate(360deg); }
-        }
-
-        /* Adaptive Mobile Breakdown Grid */
-        @media (max-width: 1024px) {
-            .dashboard-container {
-                flex-direction: column;
+        /* Print Specific Optimization */
+        @media print {
+            body {
+                background: none;
+                padding: 0;
             }
-            aside.sidebar-left, aside.sidebar-right {
+            .infographic-container {
+                box-shadow: none;
+                border: 2px solid var(--primary-blue);
                 width: 100%;
-                height: 35vh;
+                height: 100%;
+                padding: 20px;
+                border-radius: 0;
             }
-            aside.sidebar-left {
-                order: 1;
+            .tool-item {
+                page-break-inside: avoid;
+                box-shadow: none;
             }
-            main.map-workspace {
-                order: 2;
-                flex: 2;
-            }
-            aside.sidebar-right {
-                order: 3;
-            }
-            .map-legend {
-                display: none;
+            .tool-link {
+                color: #111827;
             }
         }
     </style>
 </head>
 <body>
 
-    <a href="#map" class="skip-link">Skip to Map and Spatial View</a>
-
-    <!-- Accessibility Dashboard Header -->
-    <header role="banner">
-        <div class="header-brand-container">
-            <span class="header-dept">Bureau of Educational and Cultural Affairs</span>
-            <h1 class="header-title">Exchange Visitor Interactive Analytics</h1>
-        </div>
-        <div class="header-actions">
-            <button class="btn-header" id="btn-shortcuts-toggle" aria-haspopup="dialog" aria-label="View Keyboard Shortcuts">
-                <span>⌨️</span> Keyboard Shortcuts
-            </button>
+<div class="infographic-container">
+    <header>
+        <!-- Official U.S. Department of State Seal -->
+        <img class="seal-img" src="https://upload.wikimedia.org/wikipedia/commons/8/81/U.S._Department_of_State_official_seal.svg" alt="U.S. Department of State Seal">
+        <div class="header-text">
+            <h1>U.S. Department of State</h1>
+            <p class="subtitle">AI Tools Consolidated Directory: Boosting organizational efficiency, secure drafting, secure research, analysis, and translation in alignment with official Department Policy.</p>
         </div>
     </header>
 
-    <div class="dashboard-container">
-        
-        <!-- Left Sidebar: Advanced Filter System -->
-        <aside class="sidebar-left" role="search" aria-label="Filters Panel">
-            <div class="sidebar-section-pad sidebar-header">
-                <div class="search-container">
-                    <input type="search" id="state-search" placeholder="Search by state or city..." aria-label="Search filter matrix">
-                    <span class="search-icon" aria-hidden="true">🔍</span>
-                    <div class="search-spinner" id="search-spinner-icon"></div>
-                </div>
-                <div class="stats-grid">
-                    <div class="stat-card" aria-live="polite">
-                        <div class="stat-val" id="kpi-states">0</div>
-                        <div class="stat-label">Active Hubs</div>
-                    </div>
-                    <div class="stat-card" aria-live="polite">
-                        <div class="stat-val" id="kpi-visitors">0</div>
-                        <div class="stat-label">Total Visitors</div>
-                    </div>
-                </div>
+    <div class="grid-container">
+        <!-- COLUMN 1: INTERNAL -->
+        <div class="column column-internal">
+            <div class="column-header internal-header">🛡️ Internal AI Tools</div>
+            <div class="policy-badge internal-badge">
+                SBU-APPROVED CONTENT<br>Integrates with State Systems
             </div>
+            <ul class="tool-list">
+                <li class="tool-item">
+                    <span class="tool-name">State Chat</span>
+                    <a class="tool-link" href="https://go.state.gov/statechat">https://go.state.gov/statechat</a>
+                </li>
+                <li class="tool-item">
+                    <span class="tool-name">Document Chat</span>
+                    <a class="tool-link" href="https://go.state.gov/documentchat">https://go.state.gov/documentchat</a>
+                </li>
+                <li class="tool-item">
+                    <span class="tool-name">CoDrafter</span>
+                    <a class="tool-link" href="https://go.state.gov/codrafter">https://go.state.gov/codrafter</a>
+                </li>
+                <li class="tool-item">
+                    <span class="tool-name">Cables App</span>
+                    <a class="tool-link" href="https://go.state.gov/cables">https://go.state.gov/cables</a>
+                </li>
+                <li class="tool-item">
+                    <span class="tool-name">Custom GPTs</span>
+                    <a class="tool-link" href="https://go.state.gov/customgpts">https://go.state.gov/customgpts</a>
+                </li>
+                <li class="tool-item">
+                    <span class="tool-name">Northstar Smart</span>
+                    <a class="tool-link" href="https://go.state.gov/northstarsmart">https://go.state.gov/northstarsmart</a>
+                </li>
+                <li class="tool-item">
+                    <span class="tool-name">AI Research Engine</span>
+                </li>
+                <li class="tool-item">
+                    <span class="tool-name">Summit</span>
+                </li>
+            </ul>
+        </div>
 
-            <!-- Scrollable Checklist Frame -->
-            <div class="filter-list-container">
-                <div class="filter-group-title">
-                    <span>Locations</span>
-                    <button class="btn-link-action" id="btn-clear-all" aria-label="Deselect all locations">Deselect All</button>
-                </div>
-                <ul class="filter-items" id="state-filters">
-                    <!-- Secure DOM elements injected here -->
-                </ul>
+        <!-- COLUMN 2: EXTERNAL -->
+        <div class="column column-external">
+            <div class="column-header external-header">🌐 External AI Tools</div>
+            <div class="policy-badge external-badge">
+                PUBLIC-FACING USE ONLY<br>NO SBU or SENSITIVE DATA
             </div>
-        </aside>
+            <ul class="tool-list">
+                <li class="tool-item">
+                    <span class="tool-name">ChatGPT</span>
+                    <a class="tool-link" href="https://chat.openai.com">https://chat.openai.com</a>
+                </li>
+                <li class="tool-item">
+                    <span class="tool-name">Claude</span>
+                    <a class="tool-link" href="https://claude.ai">https://claude.ai</a>
+                </li>
+                <li class="tool-item">
+                    <span class="tool-name">Perplexity</span>
+                    <a class="tool-link" href="https://www.perplexity.ai">https://www.perplexity.ai</a>
+                </li>
+                <li class="tool-item">
+                    <span class="tool-name">DeepL</span>
+                    <a class="tool-link" href="https://www.deepl.com">https://www.deepl.com</a>
+                </li>
+                <li class="tool-item">
+                    <span class="tool-name">Grammarly</span>
+                    <a class="tool-link" href="https://www.grammarly.com">https://www.grammarly.com</a>
+                </li>
+                <li class="tool-item">
+                    <span class="tool-name">HuggingFace (“Hagen”)</span>
+                    <a class="tool-link" href="https://huggingface.co">https://huggingface.co</a>
+                </li>
+                <li class="tool-item">
+                    <span class="tool-name">Wordly</span>
+                    <a class="tool-link" href="https://www.wordly.ai">https://www.wordly.ai</a>
+                </li>
+            </ul>
+        </div>
 
-        <!-- Main Map Area -->
-        <main class="map-workspace" role="main">
-            <!-- Leaflet map occupies 100% space -->
-            <div id="map" aria-label="Geographical United States Map showing active program concentrations. Click nodes to explore analytics."></div>
-            
-            <!-- Map Legend (Floating) -->
-            <div class="map-floating-panel map-legend" aria-hidden="true">
-                <div class="legend-title">Visitor Densities</div>
-                <div class="legend-row">
-                    <span class="legend-color bubble-high" style="border: 2px solid var(--danger-red)"></span> 
-                    <span>High (150+)</span>
-                </div>
-                <div class="legend-row">
-                    <span class="legend-color bubble-mid" style="border: 2px solid var(--primary-blue)"></span> 
-                    <span>Moderate (50 - 149)</span>
-                </div>
-                <div class="legend-row">
-                    <span class="legend-color bubble-low" style="border: 2px solid var(--accent-teal)"></span> 
-                    <span>Low (&lt; 50)</span>
-                </div>
+        <!-- COLUMN 3: FAN ACCOUNTS -->
+        <div class="column column-fan">
+            <div class="column-header fan-header">🔑 FAN Accounts</div>
+            <div class="policy-badge fan-badge">
+                SUPPORTS SBU SENSITIVE WORK<br>via Gov Community Cloud (GCC)
             </div>
-        </main>
-
-        <!-- Right Sidebar: Rich Details Panel & Table Extensions -->
-        <aside class="sidebar-right" aria-label="Details Dashboard">
-            <div class="detail-hero" id="detail-hero">
-                <h2 class="detail-hero-city" id="detail-city">Select Hub</h2>
-                <div class="detail-hero-state" id="detail-state">USA Location</div>
-            </div>
-
-            <div class="tab-nav" role="tablist">
-                <button class="tab-trigger active" id="trigger-overview" role="tab" aria-selected="true" aria-controls="pane-overview">Overview</button>
-                <button class="tab-trigger" id="trigger-metrics" role="tab" aria-selected="false" aria-controls="pane-metrics">Metrics</button>
-                <button class="tab-trigger" id="trigger-table" role="tab" aria-selected="false" aria-controls="pane-table">Data Table</button>
-            </div>
-
-            <!-- Tab 1: Overview Panel -->
-            <div class="tab-pane active" id="pane-overview" role="tabpanel" aria-labelledby="trigger-overview">
-                <div class="detail-card">
-                    <div class="detail-card-title">📝 Hub Profile</div>
-                    <div id="detail-description" style="font-size: 0.9rem; line-height: 1.5; color: var(--neutral-dark);">
-                        Select an active regional hub on the spatial map to load its demographic breakdown, housing profile metrics, and capacity levels.
-                    </div>
-                </div>
-                <div class="detail-card" id="card-capacity-summary" style="display: none;">
-                    <div class="detail-card-title">👥 Direct Impact</div>
-                    <div class="detail-card-val" id="detail-capacity-val">--</div>
-                    <span style="font-size:0.75rem; color: var(--neutral-mid);">Enrolled Exchange Visitors</span>
-                </div>
-            </div>
-
-            <!-- Tab 2: Metrics Panel -->
-            <div class="tab-pane" id="pane-metrics" role="tabpanel" aria-labelledby="trigger-metrics">
-                <div class="metric-container">
-                    <div class="metric-label">
-                        <span>Housing Allocation</span>
-                        <span id="label-housing-pct">0%</span>
-                    </div>
-                    <div class="metric-bar-track">
-                        <div class="metric-bar-fill" id="bar-housing"></div>
-                    </div>
-                </div>
-                <div class="metric-container">
-                    <div class="metric-label">
-                        <span>Sponsorship Execution</span>
-                        <span id="label-sponsor-pct">0%</span>
-                    </div>
-                    <div class="metric-bar-track">
-                        <div class="metric-bar-fill" id="bar-sponsor" style="background: var(--accent-teal);"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab 3: Accessible Data Table Extension inside Panel -->
-            <div class="tab-pane" id="pane-table" role="tabpanel" aria-labelledby="trigger-table">
-                <div class="sidebar-table-container">
-                    <table class="sidebar-table">
-                        <thead>
-                            <tr>
-                                <th scope="col">State</th>
-                                <th scope="col">City</th>
-                                <th scope="col">Visitors</th>
-                            </tr>
-                        </thead>
-                        <tbody id="table-body">
-                            <!-- Populated programmatically in real-time syncing with map layers -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </aside>
-    </div>
-
-    <!-- Interactive Shortcuts Dialog -->
-    <div class="modal-overlay" id="shortcuts-modal" role="dialog" aria-modal="true" aria-labelledby="shortcut-modal-title">
-        <div class="modal-content">
-            <h3 class="modal-title" id="shortcut-modal-title">System Keyboard Shortcuts</h3>
-            <div class="shortcut-grid">
-                <kbd>Alt + S</kbd> <span>Focus Dashboard Search Input</span>
-                <kbd>Alt + M</kbd> <span>Shift Focus Direct to Map Interface</span>
-                <kbd>Alt + K</kbd> <span>Open Shortcut System Overlay Help</span>
-            </div>
-            <button class="btn-modal-close" id="btn-shortcuts-close">Dismiss Shortcuts Panel</button>
+            <ul class="tool-list">
+                <li class="tool-item">
+                    <span class="tool-name">M365 Copilot Chat (GCC)</span>
+                    <a class="tool-link" href="https://copilot.office.com">https://copilot.office.com</a>
+                    <div class="tool-note">Access via M365 waffle menu. Note: copilot.microsoft.com is NOT approved.</div>
+                </li>
+                <li class="tool-item">
+                    <span class="tool-name">Google Gemini (FAN)</span>
+                    <a class="tool-link" href="https://www.google.com/gemini">https://www.google.com/gemini</a>
+                </li>
+                <li class="tool-item">
+                    <span class="tool-name">NotebookLM (FAN)</span>
+                    <a class="tool-link" href="https://notebooklm.google.com">https://notebooklm.google.com</a>
+                </li>
+            </ul>
         </div>
     </div>
 
-    <!-- Leaflet Map Engine with Cryptographic Security verification tags -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-            crossorigin=""></script>
+    <footer>
+        <div class="footer-title">🏛️ Department AI Resource Hub</div>
+        <div class="footer-grid">
+            <div class="footer-item">
+                <strong>Policy, Prompt Libraries &amp; Training:</strong><br>
+                <a class="footer-link" href="https://ai.state.gov">https://ai.state.gov</a>
+            </div>
+            <div class="footer-item">
+                <strong>Internal SharePoint Portal:</strong><br>
+                <a class="footer-link" href="https://usdos.sharepoint.com/sites/CfAManagement/AI.STATE/SitePages/Tools.aspx">Visit SharePoint Hub &rarr;</a>
+            </div>
+        </div>
+    </footer>
+</div>
 
-    <script>
-        // High-fidelity Mock Dataset including coordinate paths
-        const exchangeData = [
-            { state: "Alabama", city: "Birmingham", lat: 33.5186, lng: -86.8104, count: 45 },
-            { state: "Alaska", city: "Anchorage", lat: 61.2181, lng: -149.9003, count: 65 },
-            { state: "Arizona", city: "Phoenix", lat: 33.4484, lng: -112.0740, count: 110 },
-            { state: "Arkansas", city: "Little Rock", lat: 34.7465, lng: -92.2896, count: 35 },
-            { state: "California", city: "Los Angeles", lat: 34.0522, lng: -118.2437, count: 120 },
-            { state: "California", city: "San Francisco", lat: 37.7749, lng: -122.4194, count: 85 },
-            { state: "Colorado", city: "Denver", lat: 39.7392, lng: -104.9903, count: 95 },
-            { state: "Delaware", city: "Wilmington", lat: 39.7447, lng: -75.5484, count: 70 },
-            { state: "District of Columbia", city: "Washington", lat: 38.9072, lng: -77.0369, count: 195 },
-            { state: "Florida", city: "Orlando", lat: 28.5383, lng: -81.3792, count: 250 },
-            { state: "Georgia", city: "Atlanta", lat: 33.7490, lng: -84.3880, count: 115 },
-            { state: "Hawaii", city: "Honolulu", lat: 21.3069, lng: -157.8583, count: 90 },
-            { state: "Idaho", city: "Boise", lat: 43.6150, lng: -116.2023, count: 40 },
-            { state: "Illinois", city: "Chicago", lat: 41.8781, lng: -87.6298, count: 210 },
-            { state: "Indiana", city: "Indianapolis", lat: 39.7684, lng: -86.1581, count: 75 },
-            { state: "Iowa", city: "Des Moines", lat: 41.5868, lng: -93.6250, count: 50 },
-            { state: "Kansas", city: "Wichita", lat: 37.6872, lng: -97.3301, count: 30 },
-            { state: "Kentucky", city: "Louisville", lat: 38.2527, lng: -85.7585, count: 60 },
-            { state: "Louisiana", city: "New Orleans", lat: 29.9511, lng: -90.0715, count: 130 },
-            { state: "Maine", city: "Portland", lat: 43.6591, lng: -70.2568, count: 85 },
-            { state: "Marshall Islands", city: "Majuro", lat: 7.0897, lng: 171.3803, count: 20 }
-        ];
-
-        let selectedStates = new Set(exchangeData.map(item => item.state));
-        let mapMarkers = [];
-        let searchQuery = "";
-        let searchTimeout;
-
-        // Leaflet Map Initializations
-        const map = L.map('map', {
-            accessibility: true,
-            keyboard: true,
-            zoomControl: true
-        }).setView([37.8, -96], 4);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 18,
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-
-        // Classify Bubbles by scale
-        function getBubbleClass(count) {
-            if (count >= 150) return 'bubble-high';
-            if (count >= 50) return 'bubble-mid';
-            return 'bubble-low';
-        }
-
-        // Render visual map layer modifications & database views
-        function updateDashboard() {
-            // Remove previous marker references
-            mapMarkers.forEach(marker => map.removeLayer(marker));
-            mapMarkers = [];
-
-            const tableBody = document.getElementById('table-body');
-            tableBody.innerHTML = '';
-
-            let totalActiveStates = new Set();
-            let aggregatedVisitors = 0;
-
-            exchangeData.forEach(item => {
-                const matchesSearch = item.state.toLowerCase().includes(searchQuery) || 
-                                      item.city.toLowerCase().includes(searchQuery);
-                const matchesSelection = selectedStates.has(item.state);
-
-                if (matchesSearch && matchesSelection) {
-                    totalActiveStates.add(item.state);
-                    aggregatedVisitors += item.count;
-
-                    // Dynamically calculate bubble size based on density
-                    const diameter = Math.max(28, Math.min(50, (item.count / 8) + 20));
-                    const bubbleClass = getBubbleClass(item.count);
-
-                    // CSS DivIcon Injection - Standardised accessibility alternative inside L.divIcon
-                    const customIcon = L.divIcon({
-                        html: `<div class="map-marker-bubble ${bubbleClass}" style="width: ${diameter}px; height: ${diameter}px;" role="button" tabindex="0" aria-label="${item.city}, ${item.state}. Total visitors: ${item.count}.">${item.count}</div>`,
-                        className: 'custom-leaflet-bubble',
-                        iconSize: [diameter, diameter]
-                    });
-
-                    const marker = L.marker([item.lat, item.lng], { icon: customIcon }).addTo(map);
-
-                    // Secure Safe Text Event bindings
-                    marker.on('click', () => {
-                        map.setView([item.lat, item.lng], 6, { animate: true });
-                        loadLocationDetail(item);
-                    });
-
-                    // Popups formatted securely avoiding template string raw DOM injections
-                    marker.bindPopup(`<strong>${item.city}, ${item.state}</strong><br>Registered Visitors: ${item.count}`);
-
-                    mapMarkers.push(marker);
-
-                    // Sync table rows cleanly
-                    const row = document.createElement('tr');
-                    row.style.cursor = "pointer";
-                    row.innerHTML = `<td><strong>${item.state}</strong></td><td>${item.city}</td><td>${item.count}</td>`;
-                    
-                    // Allow selecting a location directly from clicking table rows
-                    row.addEventListener('click', () => {
-                        map.setView([item.lat, item.lng], 6, { animate: true });
-                        loadLocationDetail(item);
-                    });
-                    
-                    tableBody.appendChild(row);
-                }
-            });
-
-            // Sync visual KPI elements
-            document.getElementById('kpi-states').textContent = totalActiveStates.size;
-            document.getElementById('kpi-visitors').textContent = aggregatedVisitors.toLocaleString();
-            
-            // Highlight list nodes currently targeted
-            document.querySelectorAll('.filter-card').forEach(card => {
-                const stateName = card.querySelector('input').value;
-                if (selectedStates.has(stateName)) {
-                    card.classList.add('selected');
-                } else {
-                    card.classList.remove('selected');
-                }
-            });
-        }
-
-        // Display Detailed stats on user selection
-        function loadLocationDetail(location) {
-            document.getElementById('detail-city').textContent = location.city;
-            document.getElementById('detail-state').textContent = location.state;
-            document.getElementById('card-capacity-summary').style.display = 'block';
-            document.getElementById('detail-capacity-val').textContent = location.count;
-            document.getElementById('detail-description').innerHTML = `This system hub coordinates and supports verified exchange placements across the state region of ${location.state}. Active communication lines are open with educational sponsors.`;
-
-            // Performance-optimized dynamic progression animations
-            const housingPct = Math.min(100, Math.max(30, Math.floor(location.count * 0.38)));
-            const sponsorPct = Math.min(100, Math.max(45, Math.floor(location.count * 0.42)));
-
-            document.getElementById('label-housing-pct').textContent = `${housingPct}%`;
-            document.getElementById('label-sponsor-pct').textContent = `${sponsorPct}%`;
-            document.getElementById('bar-housing').style.width = `${housingPct}%`;
-            document.getElementById('bar-sponsor').style.width = `${sponsorPct}%`;
-        }
-
-        // Setup checklist filters dynamically 
-        function buildFilters() {
-            const list = document.getElementById('state-filters');
-            const sortedStates = [...new Set(exchangeData.map(i => i.state))].sort();
-
-            sortedStates.forEach(state => {
-                const count = exchangeData.filter(i => i.state === state).reduce((acc, current) => acc + current.count, 0);
-                const li = document.createElement('li');
-                li.className = 'filter-card';
-
-                const id = `chk-${state.replace(/\s+/g, '-').toLowerCase()}`;
-
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.id = id;
-                checkbox.value = state;
-                checkbox.checked = true;
-
-                const label = document.createElement('label');
-                label.setAttribute('for', id);
-                label.innerHTML = `<span>${state}</span> <span class="badge-count">${count}</span>`;
-
-                checkbox.addEventListener('change', (e) => {
-                    if (e.target.checked) {
-                        selectedStates.add(state);
-                    } else {
-                        selectedStates.delete(state);
-                    }
-                    updateDashboard();
-                });
-
-                li.appendChild(checkbox);
-                li.appendChild(label);
-                list.appendChild(li);
-            });
-        }
-
-        // Global Event listeners
-        document.getElementById('state-search').addEventListener('input', (e) => {
-            const spinner = document.getElementById('search-spinner-icon');
-            spinner.style.display = 'block';
-            
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                searchQuery = e.target.value.toLowerCase().trim();
-                updateDashboard();
-                spinner.style.display = 'none';
-            }, 300);
-        });
-
-        document.getElementById('btn-clear-all').addEventListener('click', () => {
-            selectedStates.clear();
-            document.querySelectorAll('.filter-items input[type="checkbox"]').forEach(cb => cb.checked = false);
-            updateDashboard();
-        });
-
-        // Accessible Drawer Tab selections
-        document.querySelectorAll('.tab-trigger').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab-trigger').forEach(t => {
-                    t.classList.remove('active');
-                    t.setAttribute('aria-selected', 'false');
-                });
-                document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-
-                tab.classList.add('active');
-                tab.setAttribute('aria-selected', 'true');
-                const paneId = tab.getAttribute('aria-controls');
-                document.getElementById(paneId).classList.add('active');
-            });
-        });
-
-        // Shortcut Window overlays 
-        const modal = document.getElementById('shortcuts-modal');
-        document.getElementById('btn-shortcuts-toggle').addEventListener('click', () => modal.classList.add('active'));
-        document.getElementById('btn-shortcuts-close').addEventListener('click', () => modal.classList.remove('active'));
-
-        // Global keydown listeners supporting accessibility goals
-        window.addEventListener('keydown', (e) => {
-            if (e.altKey && e.key.toLowerCase() === 's') {
-                e.preventDefault();
-                document.getElementById('state-search').focus();
-            }
-            if (e.altKey && e.key.toLowerCase() === 'm') {
-                e.preventDefault();
-                document.getElementById('map').focus();
-            }
-            if (e.altKey && e.key.toLowerCase() === 'k') {
-                e.preventDefault();
-                modal.classList.toggle('active');
-            }
-        });
-
-        // Initialize Pipeline
-        buildFilters();
-        updateDashboard();
-    </script>
 </body>
 </html>
